@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.security.SecureRandom;
 
 import gnu.getopt.Getopt;
 
@@ -11,7 +12,7 @@ import gnu.getopt.Getopt;
 public class DES_Skeleton {
 
 	public static void main(String[] args) {
-		
+		genDESkey();
 		StringBuilder inputFile = new StringBuilder();
 		StringBuilder outputFile = new StringBuilder();
 		StringBuilder keyStr = new StringBuilder();
@@ -87,6 +88,15 @@ public class DES_Skeleton {
 
 	static void genDESkey(){
 		System.out.println("New key goes here");
+		SecureRandom random = new SecureRandom();
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i < 8; i++){
+			int randInt = random.nextInt(256);
+			String oneRand = Integer.toHexString(randInt);
+			System.out.println(oneRand);
+			sb.append(oneRand);
+		}
+		System.out.println(sb.toString());
 		return;
 	}
 
