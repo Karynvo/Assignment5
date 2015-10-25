@@ -149,4 +149,34 @@ public class DES_Skeleton {
 		
 	}
 	
+	/**
+	 * Takes a string key and checks hexadecimal for weak keys
+	 * described at http://www.umich.edu/~x509/ssleay/des-weak.html
+	 * @param desKey
+	 * @return false if weak key, true if acceptable
+	 */
+	private boolean checkKey(StringBuilder desKey) {
+		if (desKey == null) {
+			return false;
+		}
+		if (desKey.length() != 16) {
+			return false;
+		}
+		if (desKey.equals("0101010101010101")) {
+			return false;
+		}
+		if (desKey.equals("fefefefefefefefe")) {
+			return false;
+		}
+		if (desKey.equals("1f1f1f1f1f1f1f1f")) {
+			return false;
+		}
+		if (desKey.equals("e0e0e0e0e0e0e0e0")) {
+			return false;
+		}
+		
+		return true;
+		
+	}
+	
 }
