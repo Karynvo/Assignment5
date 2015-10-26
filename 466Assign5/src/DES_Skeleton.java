@@ -87,16 +87,19 @@ public class DES_Skeleton {
 
 
 	static void genDESkey(){
-		System.out.println("New key goes here");
+		//System.out.println("New key goes here");
 		SecureRandom random = new SecureRandom();
 		StringBuilder sb = new StringBuilder();
-		for(int i = 0; i < 8; i++){
-			int randInt = random.nextInt(256);
+		for(int i = 0; i < 16; i++){
+			int randInt = random.nextInt(16);
 			String oneRand = Integer.toHexString(randInt);
-			System.out.println(oneRand);
+			//System.out.println(oneRand);
 			sb.append(oneRand);
 		}
-		System.out.println(sb.toString());
+		if (!checkKey(sb.toString())) {
+			genDESkey();
+		}
+		System.out.println("Key: " + sb.toString());
 		return;
 	}
 
@@ -165,11 +168,13 @@ public class DES_Skeleton {
 	 * @param desKey
 	 * @return false if weak key, true if acceptable
 	 */
-	private boolean checkKey(StringBuilder desKey) {
+	private static boolean checkKey(String desKey) {
+		System.out.println("check key\n");
 		if (desKey == null) {
 			return false;
 		}
 		if (desKey.length() != 16) {
+			System.out.println("key length" + desKey.length() + "\n");
 			return false;
 		}
 		if (desKey.equals("0101010101010101")) {
