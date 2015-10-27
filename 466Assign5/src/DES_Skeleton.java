@@ -3,6 +3,7 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
@@ -65,15 +66,14 @@ public class DES_Skeleton {
 	}
 
 //change string to string builder
-	private static void encrypt(String keyStr, String inputFile,
-			String outputFile) {
-		genSubkeys(keyStr);
+	private static void encrypt(String keyStr, String inputFile, String outputFile) {
+		ArrayList<BigInteger> subkeys = genSubkeys(keyStr.toString());
 		try {
 			PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
 			
 			String encryptedText;
 			for (String line : Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset())) {
-				encryptedText = DES_encrypt(line);
+				encryptedText = DES_encrypt(line, subkeys);
 				writer.print(encryptedText);
 			}
 		} catch (IOException e) {
@@ -86,37 +86,59 @@ public class DES_Skeleton {
 	 * TODO: You need to write the DES encryption here.
 	 * @param line
 	 */
-	private static String DES_encrypt(String line) {
+	private static String DES_encrypt(String line, ArrayList<BigInteger> subkeys) {
+		SBoxes sbox = new SBoxes();
+		int counter = 0;
+		while (line.length() % 7 != 0) {
+			line = line + "0";
+			counter ++;
+		}
+		
+		line = line + counter; //divisible by 8 with number of 0's added at end of string
+		String substring=""; //8 chars from original line
+		String substringBinary=""; // mixed up substring in binary
+		String substringString=""; // mixedup string of binary
+		//substringBI is the big integer mixed up substring
+		String encrypted="";
+		char[] substringIP = new char[64];
+		
+		for (int x = 0; x < line.length(); x+=8) {
+			substring = line.substring(x, x+8);
+			substringBinary = new BigInteger(substring.getBytes()).toString(2);
+			for (int i = 0; i < 64; i++) {
+				substringIP[i] = substringBinary.charAt(sbox.IP[i]); //this mixes up the substring in a char[]
+			}
+			substringString = String.valueOf(substringIP); //this takes our mixed up array and turns it into a binary string
+			BigInteger substringBI = new BigInteger(substringString, 2); //this makes the above a big int
+			encrypted = encrypted + encryptBlock(substringBI, subkeys);
+		}
+					
+		
 		
 		return null;
 	}
+	
+	private static String encryptBlock(BigInteger plainBlock, ArrayList<BigInteger> subkeys) {
+		
+		return null;
+	}
+	
 	
 	/**
 	 * generate the subkeys from keyStr, store them in an array, pass to Des_Encrypt which will encrypt every line
 	 * change string to stringbuilder
 	 */
-	private static byte[] genSubkeys(String key) {
-		String[] subKeys = new String[16];
+	private static ArrayList<BigInteger> genSubkeys(String key) {
+		//String[] subKeys = new String[16];
 		
 		SBoxes sbox = new SBoxes();
 		String strBinary = new BigInteger(key.getBytes()).toString(2);
-		BitSet bs = new BitSet(64);
-		for(int i = 0; i < strBinary.length(); i++){
-			if(strBinary.charAt(i) == '1')
-				bs.set(i);
-			
-		}
-		/*
-		System.out.println("bitset:\n" + bs.get(0, 64));
-		
-		for(int j = 0; j < strBinary.length(); j++)
-			System.out.print(bs.get(j)? 1 : 0);
-		System.out.println();
-		*/
+
 		char[] binaryChar = new char[64];
 		for (int i=0; i < 64; i++) 
 			binaryChar[i] = strBinary.charAt(i);
-		//byte[] binary = key.getBytes(Charset.forName("UTF-8"));
+		byte[] binary = key.getBytes(Charset.forName("UTF-8"));
+		System.out.println("Binary byte representation: " + Arrays.toString(binary));
 		char[] pc1Key = new char[56];
 		System.out.println(strBinary);
 		int count = 0;
@@ -124,9 +146,61 @@ public class DES_Skeleton {
 			pc1Key[count] = binaryChar[sbox.PC1[count]];
 			count++;
 		}
+		
+		String pc1String = String.valueOf(pc1Key);
+		
 		System.out.println("Binary Char: " + Arrays.toString(binaryChar));
 		System.out.println("PC key: " + Arrays.toString(pc1Key) + "length: " + pc1Key.length);
-		return null;
+		System.out.println("pc1String :" + pc1String);
+
+		/* split string into 2 */
+		String frontPC1 = pc1String.substring(0, 28);
+		String backPC1 = pc1String.substring(28, 56);
+		
+		BigInteger frontBigInt = new BigInteger(frontPC1, 2); //string to big int
+		BigInteger backBigInt = new BigInteger(backPC1, 2);
+		System.out.println("Front: " + frontBigInt.toString(2) + "\nBack: " + backBigInt.toString(2));
+		
+		/* begin rotations */
+		ArrayList<BigInteger> subKeyList = new ArrayList<BigInteger>(); //holds 16 subkeys stored as byte arrays
+		char[] subkeyPC2 = new char[48];
+		String subkeyPC2String="";
+		for (int x = 0; x < sbox.rotations.length; x++) {
+			for (int y = 0; y < sbox.rotations[x]; y++) {
+				frontBigInt = rotateLeft(frontBigInt);
+				backBigInt = rotateLeft(backBigInt);
+				System.out.println("Front binary: " + frontBigInt.toString(2));
+				System.out.println("Back binary: " + backBigInt.toString(2));
+			}
+			String temp = "";
+			if (frontBigInt.toString(2).length() < 28 ) {
+				for (int t = 0; t < 28-frontBigInt.toString(2).length(); t++)
+					temp = temp + "0";
+			}
+			temp = temp + frontBigInt.toString(2);
+			if (backBigInt.toString(2).length() < 28 ) {
+				for (int t = 0; t < 28-backBigInt.toString(2).length(); t++)
+					temp = temp + "0";
+			}
+			temp = temp + backBigInt.toString(2);
+			System.out.println("concatenated string: " + temp);
+			
+			for (int i=0; i < 48; i++) 
+				subkeyPC2[i] = temp.charAt(i); //char[] of mixed up subkey
+			
+			subkeyPC2String = String.valueOf(subkeyPC2);
+			
+			BigInteger bigtemp = new BigInteger(subkeyPC2String, 2);
+			subKeyList.add(bigtemp);
+			System.out.println("Big temp check: " + bigtemp.toString());
+		}
+		
+		return subKeyList;
+	}
+	
+	private static BigInteger rotateLeft(BigInteger bigI) {
+	    int value = bigI.intValue();
+	    return BigInteger.valueOf(((value << 1) & 0xffffffe) | ((value >>> 27) & 1));
 	}
 
 
