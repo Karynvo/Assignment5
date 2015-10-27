@@ -105,6 +105,11 @@ public class DES_Skeleton {
 		for (int x = 0; x < line.length(); x+=8) {
 			substring = line.substring(x, x+8);
 			substringBinary = new BigInteger(substring.getBytes()).toString(2);
+			
+			/**
+			 * MIX UP FUNCTION, send substringBinary (binary concatenated string), substringIP[] (size48) and sbox.IP
+			 * return big int
+			 */
 			for (int i = 0; i < 64; i++) {
 				substringIP[i] = substringBinary.charAt(sbox.IP[i]); //this mixes up the substring in a char[]
 			}
@@ -135,15 +140,23 @@ public class DES_Skeleton {
 		String strBinary = new BigInteger(key.getBytes()).toString(2);
 
 		char[] binaryChar = new char[64];
+		/*
 		for (int i=0; i < 64; i++) 
 			binaryChar[i] = strBinary.charAt(i);
+		*/
 		byte[] binary = key.getBytes(Charset.forName("UTF-8"));
 		System.out.println("Binary byte representation: " + Arrays.toString(binary));
 		char[] pc1Key = new char[56];
 		System.out.println(strBinary);
 		int count = 0;
+		
+		/**
+		 * MIX UP FUNCTION, send strBinary (binary concatenated string), pc1Key[] (size56) and sbox.PC2
+		 * return big int
+		 */
 		while (count < 56) {
-			pc1Key[count] = binaryChar[sbox.PC1[count]];
+			//pc1Key[count] = binaryChar[sbox.PC1[count]];
+			pc1Key[count] = strBinary.charAt(sbox.PC1[count]);
 			count++;
 		}
 		
@@ -185,8 +198,12 @@ public class DES_Skeleton {
 			temp = temp + backBigInt.toString(2);
 			System.out.println("concatenated string: " + temp);
 			
+			/**
+			 * MIX UP FUNCTION, send temp (binary concatenated string), subkeyPC2[] and sbox.PC2
+			 * 					return BIGInt
+			 */
 			for (int i=0; i < 48; i++) 
-				subkeyPC2[i] = temp.charAt(i); //char[] of mixed up subkey
+				subkeyPC2[i] = temp.charAt(sbox.PC2[i]); //char[] of mixed up subkey
 			
 			subkeyPC2String = String.valueOf(subkeyPC2);
 			
