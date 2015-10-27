@@ -3,21 +3,27 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
 import java.security.SecureRandom;
+import java.math.BigInteger;
 
 import gnu.getopt.Getopt;
 
 
 public class DES_Skeleton {
-
+	
 	public static void main(String[] args) {
 		genDESkey();
+		encrypt("90246fa77f012845", "inputFile", "outputFile");
+		
 		StringBuilder inputFile = new StringBuilder();
 		StringBuilder outputFile = new StringBuilder();
 		StringBuilder keyStr = new StringBuilder();
 		StringBuilder encrypt = new StringBuilder();
 		
+		/*
 		pcl(args, inputFile, outputFile, keyStr, encrypt);
 		
 		if(keyStr.toString() != "" && encrypt.toString().equals("e")){
@@ -26,7 +32,7 @@ public class DES_Skeleton {
 			decrypt(keyStr, inputFile, outputFile);
 		}
 		
-		
+		*/
 	}
 	
 
@@ -58,10 +64,10 @@ public class DES_Skeleton {
 		return null;
 	}
 
-
-	private static void encrypt(StringBuilder keyStr, StringBuilder inputFile,
-			StringBuilder outputFile) {
-		
+//change string to string builder
+	private static void encrypt(String keyStr, String inputFile,
+			String outputFile) {
+		genSubkeys(keyStr);
 		try {
 			PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
 			
@@ -82,6 +88,44 @@ public class DES_Skeleton {
 	 */
 	private static String DES_encrypt(String line) {
 		
+		return null;
+	}
+	
+	/**
+	 * generate the subkeys from keyStr, store them in an array, pass to Des_Encrypt which will encrypt every line
+	 * change string to stringbuilder
+	 */
+	private static byte[] genSubkeys(String key) {
+		String[] subKeys = new String[16];
+		
+		SBoxes sbox = new SBoxes();
+		String strBinary = new BigInteger(key.getBytes()).toString(2);
+		BitSet bs = new BitSet(64);
+		for(int i = 0; i < strBinary.length(); i++){
+			if(strBinary.charAt(i) == '1')
+				bs.set(i);
+			
+		}
+		/*
+		System.out.println("bitset:\n" + bs.get(0, 64));
+		
+		for(int j = 0; j < strBinary.length(); j++)
+			System.out.print(bs.get(j)? 1 : 0);
+		System.out.println();
+		*/
+		char[] binaryChar = new char[64];
+		for (int i=0; i < 64; i++) 
+			binaryChar[i] = strBinary.charAt(i);
+		//byte[] binary = key.getBytes(Charset.forName("UTF-8"));
+		char[] pc1Key = new char[56];
+		System.out.println(strBinary);
+		int count = 0;
+		while (count < 56) {
+			pc1Key[count] = binaryChar[sbox.PC1[count]];
+			count++;
+		}
+		System.out.println("Binary Char: " + Arrays.toString(binaryChar));
+		System.out.println("PC key: " + Arrays.toString(pc1Key) + "length: " + pc1Key.length);
 		return null;
 	}
 
