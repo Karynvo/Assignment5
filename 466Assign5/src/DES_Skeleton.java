@@ -97,24 +97,24 @@ public class DES_Skeleton {
 		line = line + counter; //divisible by 8 with number of 0's added at end of string
 		String substring=""; //8 chars from original line
 		String substringBinary=""; // mixed up substring in binary
-		String substringString=""; // mixedup string of binary
+//		String substringString=""; // mixedup string of binary
 		//substringBI is the big integer mixed up substring
 		String encrypted="";
-		char[] substringIP = new char[64];
+//		char[] substringIP = new char[64];
 		
 		for (int x = 0; x < line.length(); x+=8) {
 			substring = line.substring(x, x+8);
 			substringBinary = new BigInteger(substring.getBytes()).toString(2);
 			
 			/**
-			 * MIX UP FUNCTION, send substringBinary (binary concatenated string), substringIP[] (size48) and sbox.IP
+			 * MIX UP FUNCTION, send substringBinary (binary concatenated string), substringIP[] (size64) and sbox.IP
 			 * return big int
 			 */
-			for (int i = 0; i < 64; i++) {
-				substringIP[i] = substringBinary.charAt(sbox.IP[i]); //this mixes up the substring in a char[]
-			}
-			substringString = String.valueOf(substringIP); //this takes our mixed up array and turns it into a binary string
-			BigInteger substringBI = new BigInteger(substringString, 2); //this makes the above a big int
+//			for (int i = 0; i < 64; i++) {
+//				substringIP[i] = substringBinary.charAt(sbox.IP[i]); //this mixes up the substring in a char[]
+//			}
+//			substringString = String.valueOf(substringIP); //this takes our mixed up array and turns it into a binary string
+			BigInteger substringBI = scramble(substringBinary, 64, sbox.IP); //this makes the above a big int
 			encrypted = encrypted + encryptBlock(substringBI, subkeys);
 		}
 					
@@ -146,29 +146,31 @@ public class DES_Skeleton {
 		*/
 		byte[] binary = key.getBytes(Charset.forName("UTF-8"));
 		System.out.println("Binary byte representation: " + Arrays.toString(binary));
-		char[] pc1Key = new char[56];
+//		char[] pc1Key = new char[56];
 		System.out.println(strBinary);
-		int count = 0;
+//		int count = 0;
 		
 		/**
-		 * MIX UP FUNCTION, send strBinary (binary concatenated string), pc1Key[] (size56) and sbox.PC2
+		 * MIX UP FUNCTION, send strBinary (binary concatenated string), pc1Key[] (size56) and sbox.PC1
 		 * return big int
 		 */
-		while (count < 56) {
-			//pc1Key[count] = binaryChar[sbox.PC1[count]];
-			pc1Key[count] = strBinary.charAt(sbox.PC1[count]);
-			count++;
-		}
+//		while (count < 56) {
+//			//pc1Key[count] = binaryChar[sbox.PC1[count]];
+//			pc1Key[count] = strBinary.charAt(sbox.PC1[count]);
+//			count++;
+//		}
+//		
+//		String pc1String = String.valueOf(pc1Key);
 		
-		String pc1String = String.valueOf(pc1Key);
+//		System.out.println("Binary Char: " + Arrays.toString(binaryChar));
+//		System.out.println("PC key: " + Arrays.toString(pc1Key) + "length: " + pc1Key.length);
+//		System.out.println("pc1String :" + pc1String);
 		
-		System.out.println("Binary Char: " + Arrays.toString(binaryChar));
-		System.out.println("PC key: " + Arrays.toString(pc1Key) + "length: " + pc1Key.length);
-		System.out.println("pc1String :" + pc1String);
+		BigInteger fullPC1 = scramble(strBinary, 56, sbox.PC1);
 
 		/* split string into 2 */
-		String frontPC1 = pc1String.substring(0, 28);
-		String backPC1 = pc1String.substring(28, 56);
+		String frontPC1 = fullPC1.toString(2).substring(0, 28);
+		String backPC1 = fullPC1.toString(2).substring(28, 56);
 		
 		BigInteger frontBigInt = new BigInteger(frontPC1, 2); //string to big int
 		BigInteger backBigInt = new BigInteger(backPC1, 2);
@@ -176,8 +178,8 @@ public class DES_Skeleton {
 		
 		/* begin rotations */
 		ArrayList<BigInteger> subKeyList = new ArrayList<BigInteger>(); //holds 16 subkeys stored as byte arrays
-		char[] subkeyPC2 = new char[48];
-		String subkeyPC2String="";
+		//char[] subkeyPC2 = new char[48];
+//		String subkeyPC2String="";
 		for (int x = 0; x < sbox.rotations.length; x++) {
 			for (int y = 0; y < sbox.rotations[x]; y++) {
 				frontBigInt = rotateLeft(frontBigInt);
@@ -196,20 +198,21 @@ public class DES_Skeleton {
 					temp = temp + "0";
 			}
 			temp = temp + backBigInt.toString(2);
-			System.out.println("concatenated string: " + temp);
+			System.out.println("concatenated string: " + temp + " size: " + temp.length());
 			
 			/**
 			 * MIX UP FUNCTION, send temp (binary concatenated string), subkeyPC2[] and sbox.PC2
 			 * 					return BIGInt
 			 */
-			for (int i=0; i < 48; i++) 
-				subkeyPC2[i] = temp.charAt(sbox.PC2[i]); //char[] of mixed up subkey
-			
-			subkeyPC2String = String.valueOf(subkeyPC2);
-			
-			BigInteger bigtemp = new BigInteger(subkeyPC2String, 2);
+//			for (int i=0; i < 48; i++) 
+//				subkeyPC2[i] = temp.charAt(sbox.PC2[i]); //char[] of mixed up subkey
+//			
+//			subkeyPC2String = String.valueOf(subkeyPC2);
+//			
+//			BigInteger bigtemp = new BigInteger(subkeyPC2String, 2);
+			BigInteger bigtemp = scramble(temp, 48, sbox.PC2);
 			subKeyList.add(bigtemp);
-			System.out.println("Big temp check: " + bigtemp.toString());
+//			System.out.println("Big temp check: " + bigtemp.toString());
 		}
 		
 		return subKeyList;
@@ -220,6 +223,29 @@ public class DES_Skeleton {
 	    return BigInteger.valueOf(((value << 1) & 0xffffffe) | ((value >>> 27) & 1));
 	}
 
+	/**
+	 * Scrambles contents of binaryStr specified by sbox
+	 * 
+	 * @param binaryStr string of binary representation of message
+	 * @param sizeOut desired size of output
+	 * @param sbox the sbox to use
+	 * @return BigInteger representation of scrambled string
+	 */
+	private static BigInteger scramble(String binaryStr, int sizeOut, int[] sbox){
+		char[] binaryChar = new char[sizeOut];
+		
+		// scramble by putting into char array of size sizeOut
+		for(int i = 0; i < sizeOut; i++)
+			binaryChar[i] = binaryStr.charAt(sbox[i] - 1);
+		
+		// convert back to string
+		String scrambledStr = String.valueOf(binaryChar);
+		
+		// make it into a big int
+		BigInteger returnBig = new BigInteger(scrambledStr, 2);
+		
+		return returnBig;
+	}
 
 	static void genDESkey(){
 		//System.out.println("New key goes here");
