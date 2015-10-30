@@ -262,8 +262,7 @@ public class DES_Skeleton {
 		BigInteger eBoxRightResult = scramble(rightStr, 48, sbox.E); // E(R0)
 		
 		// XOR with subkey
-//		BigInteger xorResult = eBoxRightResult.xor(subkeys.get(keyNum));
-		BigInteger xorResult = subkeys.get(keyNum).xor(eBoxRightResult);
+		BigInteger xorResult = eBoxRightResult.xor(subkeys.get(keyNum));
 		
 		// divide into 8 blocks of 6
 		String xorString = checkBinaryStr(xorResult.toString(2), 48);
