@@ -47,13 +47,16 @@ public class DES_Skeleton {
 			lines.remove(0);
 			String encryptedText;
 			String trimmed = "";
+			String readIn="";
 			for (String line : lines) {
-				encryptedText = DES_decrypt(IVStr, line, subkeys);
+				readIn += line;
+			}
+				encryptedText = DES_decrypt(IVStr, readIn, subkeys);
 				//remove last line which is padding
-				trimmed = encryptedText.substring(0, encryptedText.length() - (9-Integer.parseInt(encryptedText.substring(encryptedText.length()-1))));
+				trimmed = encryptedText.substring(0, encryptedText.length() - (8-Integer.parseInt(encryptedText.substring(encryptedText.length()-1))));
 				writer.print(trimmed);
 				//System.out.println(trimmed);
-			}
+		//}
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -239,7 +242,7 @@ public class DES_Skeleton {
 			cipherblock = checkBinaryStr(scramble(cipherblock, 64, sbox.FP).toString(16), 16); /* ALERT CHECKED CIPHERBLOCK*/
 			previousCipher = new BigInteger(cipherblock, 16);
 			
-			encrypted = encrypted + cipherblock;		//begin function f
+			encrypted = encrypted + cipherblock + "\n";		//begin function f
 			//System.out.println("line: " + line + "\tline length: " + line.length());
 		//	System.out.println("cipherblock is: " + cipherblock + "\tlength: " + cipherblock.length());
 		}
