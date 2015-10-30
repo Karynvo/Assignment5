@@ -1,3 +1,10 @@
+/**
+ * WRITTEN BY: Karyn Vo and Sydney Warner
+ * CS466 Assignmnet5: Part A - DES in CBC mode
+ * due 10/30 @ 11:59
+ */
+
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
@@ -540,7 +547,12 @@ public class DES_Skeleton {
 	
 	private static void callUseage(int exitStatus) {
 		
-		String useage = "";
+		String useage = ""
+				+ "-k \t Generates a 16 character DES key encoded in hex to be used for encryption and decryption\n"
+				+ "-e \t Takes 1 argument; a 16 hexadecimal key from the user and encrypts a message from a specified inputfile (-i inputFileName) in PlaintText to a specified outputfile (-o outputFileName) in CipherText\n"
+				+ "-d \t Takes 1 argument; a 16 hexadecimal key from the user and decrypts a message from a specified inputfile (-i inputFileName) in CipherText to a specified outputfile (-o outputFileName) in PlainText\n"
+				+ "-i \t Takes 1 argument that is the name of the input file from which the encryption program will read\n"
+				+ "-o \t Takes 1 argument that is the name of the output file from which the encryption program will write\n";
 		
 		System.err.println(useage);
 		System.exit(exitStatus);
