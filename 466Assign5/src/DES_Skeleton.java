@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
 import java.security.SecureRandom;
 import java.math.BigInteger;
@@ -39,6 +40,8 @@ public class DES_Skeleton {
 
 	private static void decrypt(StringBuilder keyStr, StringBuilder inputFile,
 			StringBuilder outputFile) {
+		ArrayList<BigInteger> subkeys = genSubkeys(keyStr.toString());
+		Collections.reverse(subkeys); //INVERSE SUBKEYS
 		try {
 			PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
 			List<String> lines = Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset());
@@ -47,9 +50,13 @@ public class DES_Skeleton {
 			String encryptedText;
 			
 			for (String line : lines) {
-				encryptedText = DES_decrypt(IVStr, line);
+				encryptedText = DES_decrypt(IVStr, line, subkeys);
+				//remove last line which is padding
+
 				writer.print(encryptedText);
+				System.out.println(encryptedText);
 			}
+			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -60,22 +67,98 @@ public class DES_Skeleton {
 	 * TODO: You need to write the DES encryption here.
 	 * @param line
 	 */
-	private static String DES_decrypt(String iVStr, String line) {
+	private static String DES_decrypt(String iVStr, String line, ArrayList <BigInteger> subkeys) {
 		
-		return null;
+		SBoxes sbox = new SBoxes();
+		
+		System.out.println("Subkeys");
+		for(BigInteger big : subkeys)
+			System.out.println(big.toString(16));
+		String substring=""; //8 chars from original line
+		String substringBinary=""; // mixed up substring in binary
+		String decrypted="";
+		BigInteger substringBI = null;
+		
+		for (int x = 0; x < line.length(); x+=16) {
+			substring = line.substring(x, x+16);
+			substringBinary = new BigInteger(substring, 16).toString(2);
+			substringBinary = checkBinaryStr(substringBinary, 64);
+			
+			// IP box first
+			BigInteger substringFP = scramble(substringBinary, 64, sbox.IP);
+			substringBinary = checkBinaryStr(substringFP.toString(2), 64);
+			
+			//split into left and right without running through IP box
+			String leftBinary = substringBinary.substring(0, 32);
+			String rightBinary = substringBinary.substring(32, 64);
+			
+			BigInteger leftBigInt = new BigInteger(leftBinary, 2);			//take the halves and make them big ints
+			BigInteger rightBigInt = new BigInteger(rightBinary, 2);
+			
+			String plaintextBlock = encryptBlock(leftBigInt, rightBigInt, subkeys, 0);
+			BigInteger plainBI = new BigInteger(plaintextBlock, 2);
+			
+			System.out.println("Decrypt after encryptBlock: " + plainBI.toString(16));
+			
+			
+			// after decrypting block
+			
+			// xor with iv or previous
+			if(x == 0){
+				BigInteger iV = new BigInteger(iVStr, 16);
+				substringBI = iV.xor(plainBI);
+			}else{
+				System.out.println(line.substring(x-16, x));
+				BigInteger previousCipher = new BigInteger(line.substring(x-16, x), 16);
+				substringBI = previousCipher.xor(plainBI);
+			}
+			substringBI = scramble(checkBinaryStr(substringBI.toString(2), 64), 64, sbox.FP);
+			// run through IP box
+			substringBinary = checkBinaryStr(substringBI.toString(2), 64);
+//			substringBI = scramble(substringBinary, 64, sbox.IP);
+			
+			System.out.println("Decrypt after IP: " + substringBI.toString(16));
+			
+			byte[] byteSubstring = substringBI.toByteArray();
+			String decryptedSubStr = new String(byteSubstring);
+			
+			decrypted = decrypted + decryptedSubStr;
+		}
+		return decrypted;
+//		return null;
 	}
+	
+	
 
 //change string to string builder
 	private static void encrypt(StringBuilder keyStr, StringBuilder inputFile, StringBuilder outputFile) {
 		ArrayList<BigInteger> subkeys = genSubkeys(keyStr.toString());
 		try {
 			PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
-			
+			String textToPass="";
 			String encryptedText;
 			for (String line : Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset())) {
-				encryptedText = DES_encrypt(line, subkeys);
+				textToPass += line + "\n";
+			}
+				int linelength = textToPass.length();
+				int extraChars = linelength % 8;
+				
+				if (extraChars == 0) {
+					textToPass = textToPass + "00000000";
+				}
+				else {
+					for (int t = extraChars; t < 7; t++) {
+					textToPass +="0";
+					}
+					
+					textToPass += extraChars;
+		
+				
+				encryptedText = DES_encrypt(textToPass, subkeys);
+				System.out.println(encryptedText);
 				writer.print(encryptedText);
 			}
+			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -87,14 +170,8 @@ public class DES_Skeleton {
 	 * @param line
 	 */
 	private static String DES_encrypt(String line, ArrayList<BigInteger> subkeys) {
-		String cipherText = "";
 		SBoxes sbox = new SBoxes();
-		int counter = 0;
 		/*
-		while (line.length() % 8 != 0) {
-			line = line + "0";
-			counter ++;
-		}*/
 		int linelength = line.length();
 		linelength = linelength % 8;
 		
@@ -108,56 +185,68 @@ public class DES_Skeleton {
 			
 			line += 8-linelength;
 		}
+		*/
+		System.out.println("Subkeys");
+		for(BigInteger big : subkeys)
+			System.out.println(big.toString(16));
 		
-		
-		//line = line + counter; //divisible by 8 with number of 0's added at end of string
 		String substring=""; //8 chars from original line
 		String substringBinary=""; // mixed up substring in binary
-//		String substringString=""; // mixedup string of binary
-		//substringBI is the big integer mixed up substring
 		String encrypted="";
-//		char[] substringIP = new char[64];
+		BigInteger previousCipher = null;
 		
 		for (int x = 0; x < line.length(); x+=8) {
 			substring = line.substring(x, x+8);
 			substringBinary = new BigInteger(substring.getBytes()).toString(2);
 			substringBinary = checkBinaryStr(substringBinary, 64);
 			
-			/**
-			 * MIX UP FUNCTION, send substringBinary (binary concatenated string), substringIP[] (size64) and sbox.IP
-			 * return big int
-			 */
-//			for (int i = 0; i < 64; i++) {
-//				substringIP[i] = substringBinary.charAt(sbox.IP[i]); //this mixes up the substring in a char[]
-//			}
-//			substringString = String.valueOf(substringIP); //this takes our mixed up array and turns it into a binary string
-			System.out.println("String to go to sbox size: " + substringBinary.length());
+			System.out.println("Encrypt Before IP: " + new BigInteger(substring.getBytes()).toString(16));
+			
 			BigInteger substringBI = scramble(substringBinary, 64, sbox.IP); //this makes the above a big int
 			
+			if(x == 0){
+				//CREATE IV
+				String hexiV = genDESkey();
+				BigInteger iV = new BigInteger(hexiV, 16);
+				//xor BIG INT and IV, add IV to String that will contain ciphertext;
+				substringBI = iV.xor(substringBI);
+				encrypted = hexiV + "\n";
+//				System.out.println("iV is: " + encrypted);
+			}
+			else {
+				substringBI = previousCipher.xor(substringBI);
+			}
+			
 			String checkSubstringBI = checkBinaryStr(substringBI.toString(2), 64);
+			
 			String leftBinary = checkSubstringBI.substring(0, 32);	//toString, divide in half L0
 			String rightBinary = checkSubstringBI.substring(32, 64); //R0
 			
 			BigInteger leftBigInt = new BigInteger(leftBinary, 2);			//take the halves and make them big ints
 			BigInteger rightBigInt = new BigInteger(rightBinary, 2);
+			System.out.println("Encrypt before encryptblock: " + new BigInteger(checkSubstringBI, 2).toString(16));
+			String cipherblock =  encryptBlock(leftBigInt, rightBigInt, subkeys, 0);
+			//final permutation box
+			cipherblock = scramble(cipherblock, 64, sbox.FP).toString(16);
+			previousCipher = new BigInteger(cipherblock, 16);
 			
-			encrypted = encrypted + encryptBlock(cipherText, leftBigInt, rightBigInt, subkeys, 0);		//begin function f
+			encrypted = encrypted + cipherblock;		//begin function f
 			System.out.println("line: " + line + "\tline length: " + line.length());
 		}
-					
-		
-		
-		return null;
+		return encrypted;
 	}
 	
-	private static String encryptBlock(String cipherText, BigInteger left, BigInteger right, ArrayList<BigInteger> subkeys, int keyNum) {
-			
-		if (keyNum == 16) {
-			System.out.println("Cipher text: " + cipherText);
-			return cipherText;
-		}
+	private static String encryptBlock(BigInteger left, BigInteger right, ArrayList<BigInteger> subkeys, int keyNum) {
+		
+		String cipherBlock=""; //This will be our concatenated string after the addressing (Sbox)
 		
 		SBoxes sbox = new SBoxes();
+		
+		if (keyNum == 16) {
+			//right + left = 64 bit ciphertext
+			String rightLeft = checkBinaryStr(right.toString(2), 32) + checkBinaryStr(left.toString(2), 32);
+			return rightLeft;
+		}
 		
 		/* begin function f */
 		
@@ -170,7 +259,6 @@ public class DES_Skeleton {
 		
 		// divide into 8 blocks of 6
 		String xorString = checkBinaryStr(xorResult.toString(2), 48);
-		String cipherBlock=""; //This will be our concatenated string after the addressing (Sbox)
 		for(int x = 0; x < 48; x+=6){
 			String rowSubStr = xorString.substring(x, x+2);
 			String colSubStr = xorString.substring(x+2, x+6);
@@ -181,7 +269,7 @@ public class DES_Skeleton {
 			
 			// get 4 bit from corresponding S box
 			// (row - 1) * 15 + col - 1
-			System.out.println("keyNum: " + keyNum + "\tx: " + x + "\trow: " + row + "\tcol: " + col);
+			//System.out.println("keyNum: " + keyNum + "\tx: " + x + "\trow: " + row + "\tcol: " + col);
 			int result = sbox.S[x/6][((row) * 15 + col )];
 			String fourBit = Integer.toBinaryString(result);
 			//checkBinaryStr (size 4)
@@ -193,13 +281,11 @@ public class DES_Skeleton {
 		}
 		
 		BigInteger pBoxResult = scramble(cipherBlock, 32, sbox.P);
-		cipherText = cipherText + cipherBlock;
 		BigInteger newRight = left.xor(pBoxResult); //final right big int
 		//left old right
 		BigInteger newLeft = right;
 		keyNum++;
-		encryptBlock(cipherText, newLeft, newRight, subkeys, keyNum);
-		return null;
+		return encryptBlock(newLeft, newRight, subkeys, keyNum);
 	}
 	
 	
@@ -260,8 +346,8 @@ public class DES_Skeleton {
 			for (int y = 0; y < sbox.rotations[x]; y++) {
 				frontBigInt = rotateLeft(frontBigInt);
 				backBigInt = rotateLeft(backBigInt);
-				System.out.println("Front binary: " + frontBigInt.toString(2));
-				System.out.println("Back binary: " + backBigInt.toString(2));
+//				System.out.println("Front binary: " + frontBigInt.toString(2));
+//				System.out.println("Back binary: " + backBigInt.toString(2));
 			}
 			String temp = "";
 			if (frontBigInt.toString(2).length() < 28 ) {
@@ -274,7 +360,7 @@ public class DES_Skeleton {
 					temp = temp + "0";
 			}
 			temp = temp + backBigInt.toString(2);
-			System.out.println("concatenated string: " + temp + " size: " + temp.length());
+//			System.out.println("concatenated string: " + temp + " size: " + temp.length());
 			
 			/**
 			 * MIX UP FUNCTION, send temp (binary concatenated string), subkeyPC2[] and sbox.PC2
@@ -323,6 +409,36 @@ public class DES_Skeleton {
 		return returnBig;
 	}
 	
+	/**
+	 * Descrambles contents of a binary ciphertext string specified by sbox
+	 * @param cipherStr
+	 * @param sizeOut
+	 * @param sbox
+	 * @return
+	 */
+	private static BigInteger descramble(String cipherStr, int sizeOut, int[] sbox){
+		char[] binaryChar = new char[sizeOut];
+		
+		// scramble by putting into char array of size sizeOut
+		for(int i = 0; i < sizeOut; i++)
+			binaryChar[sbox[i] - 1] = cipherStr.charAt(i);
+		
+		// convert back to string
+		String descrambledStr = String.valueOf(binaryChar);
+		
+		// make it into a big int
+		BigInteger returnBig = new BigInteger(descrambledStr, 2);
+		
+		return returnBig;
+	}
+	
+//	private static BigInteger unscramble(String binaryStr, String cipherStr, int sizeOut, int[] sbox){
+//		char[] binaryChar = new char[sizeOut];
+//		
+//		for(int i = 0; i < sizeOut; i++)
+//			binaryChar[i] = cipherStr.charAt(sbox[i] - 1);
+//	}
+	
 	private static String checkBinaryStr(String binaryStr, int size){
 		String returnStr = "";
 		
@@ -334,7 +450,7 @@ public class DES_Skeleton {
 		return returnStr;
 	}
 
-	static void genDESkey(){
+	static String genDESkey(){
 		//System.out.println("New key goes here");
 		SecureRandom random = new SecureRandom();
 		StringBuilder sb = new StringBuilder();
@@ -348,7 +464,7 @@ public class DES_Skeleton {
 			genDESkey();
 		}
 		System.out.println("Key: " + sb.toString());
-		return;
+		return sb.toString();
 	}
 
 
