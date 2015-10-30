@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 import java.security.SecureRandom;
@@ -420,36 +419,6 @@ public class DES_Skeleton {
 		return returnBig;
 	}
 	
-	/**
-	 * Descrambles contents of a binary ciphertext string specified by sbox
-	 * @param cipherStr
-	 * @param sizeOut
-	 * @param sbox
-	 * @return
-	 */
-	private static BigInteger descramble(String cipherStr, int sizeOut, int[] sbox){
-		char[] binaryChar = new char[sizeOut];
-		
-		// scramble by putting into char array of size sizeOut
-		for(int i = 0; i < sizeOut; i++)
-			binaryChar[sbox[i] - 1] = cipherStr.charAt(i);
-		
-		// convert back to string
-		String descrambledStr = String.valueOf(binaryChar);
-		
-		// make it into a big int
-		BigInteger returnBig = new BigInteger(descrambledStr, 2);
-		
-		return returnBig;
-	}
-	
-//	private static BigInteger unscramble(String binaryStr, String cipherStr, int sizeOut, int[] sbox){
-//		char[] binaryChar = new char[sizeOut];
-//		
-//		for(int i = 0; i < sizeOut; i++)
-//			binaryChar[i] = cipherStr.charAt(sbox[i] - 1);
-//	}
-	
 	private static String checkBinaryStr(String binaryStr, int size){
 		String returnStr = "";
 		
@@ -531,6 +500,12 @@ public class DES_Skeleton {
 	private static void callUseage(int exitStatus) {
 		
 		String useage = "";
+		
+		System.out.println("-k\tGenerates a DES key encoded in hex\n");
+		System.out.println("-e\tTakes 1 argument that takes a 64 bit key in hex and encrypts file specified by -i\n");
+		System.out.println("-d\tTakes 1 argument that takes a 64 bit key in hex and decrypts file specified by -i\n");
+		System.out.println("-i\tTakes 1 argument that is the name of the input file\n");
+		System.out.println("-o\tTakes 1 argument that is the name of the output file\n");
 		
 		System.err.println(useage);
 		System.exit(exitStatus);
