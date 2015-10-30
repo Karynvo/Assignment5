@@ -48,13 +48,13 @@ public class DES_Skeleton {
 			String IVStr = lines.get(0);
 			lines.remove(0);
 			String encryptedText;
-			
+			String trimmed = "";
 			for (String line : lines) {
 				encryptedText = DES_decrypt(IVStr, line, subkeys);
 				//remove last line which is padding
-
-				writer.print(encryptedText);
-				System.out.println(encryptedText);
+				trimmed = encryptedText.substring(0, encryptedText.length() - (9-Integer.parseInt(encryptedText.substring(encryptedText.length()-1))));
+				writer.print(trimmed);
+				System.out.println(trimmed);
 			}
 			writer.close();
 		} catch (IOException e) {
@@ -80,6 +80,7 @@ public class DES_Skeleton {
 		BigInteger substringBI = null;
 		
 		for (int x = 0; x < line.length(); x+=16) {
+			System.out.println("Line: " + line);
 			substring = line.substring(x, x+16);
 			substringBinary = new BigInteger(substring, 16).toString(2);
 			substringBinary = checkBinaryStr(substringBinary, 64);
@@ -133,6 +134,11 @@ public class DES_Skeleton {
 //change string to string builder
 	private static void encrypt(StringBuilder keyStr, StringBuilder inputFile, StringBuilder outputFile) {
 		ArrayList<BigInteger> subkeys = genSubkeys(keyStr.toString());
+	
+		System.out.println("Subkeys from encrypt");
+		for(BigInteger big : subkeys)
+			System.out.println(big.toString(16));
+		
 		try {
 			PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
 			String textToPass="";
@@ -232,6 +238,7 @@ public class DES_Skeleton {
 			
 			encrypted = encrypted + cipherblock;		//begin function f
 			System.out.println("line: " + line + "\tline length: " + line.length());
+			System.out.println("cipherblock is: " + cipherblock + "\tlength: " + cipherblock.length());
 		}
 		return encrypted;
 	}
@@ -255,7 +262,8 @@ public class DES_Skeleton {
 		BigInteger eBoxRightResult = scramble(rightStr, 48, sbox.E); // E(R0)
 		
 		// XOR with subkey
-		BigInteger xorResult = eBoxRightResult.xor(subkeys.get(keyNum));
+//		BigInteger xorResult = eBoxRightResult.xor(subkeys.get(keyNum));
+		BigInteger xorResult = subkeys.get(keyNum).xor(eBoxRightResult);
 		
 		// divide into 8 blocks of 6
 		String xorString = checkBinaryStr(xorResult.toString(2), 48);
@@ -349,17 +357,20 @@ public class DES_Skeleton {
 //				System.out.println("Front binary: " + frontBigInt.toString(2));
 //				System.out.println("Back binary: " + backBigInt.toString(2));
 			}
-			String temp = "";
-			if (frontBigInt.toString(2).length() < 28 ) {
-				for (int t = 0; t < 28-frontBigInt.toString(2).length(); t++)
-					temp = temp + "0";
-			}
-			temp = temp + frontBigInt.toString(2);
-			if (backBigInt.toString(2).length() < 28 ) {
-				for (int t = 0; t < 28-backBigInt.toString(2).length(); t++)
-					temp = temp + "0";
-			}
-			temp = temp + backBigInt.toString(2);
+			
+			String frontStr = checkBinaryStr(frontBigInt.toString(2), 28);
+			String backStr = checkBinaryStr(backBigInt.toString(2), 28);
+			String temp = frontStr + backStr;
+//			if (frontBigInt.toString(2).length() < 28 ) {
+//				for (int t = 0; t < 28-frontBigInt.toString(2).length(); t++)
+//					temp = temp + "0";
+//			}
+//			temp = temp + frontBigInt.toString(2);
+//			if (backBigInt.toString(2).length() < 28 ) {
+//				for (int t = 0; t < 28-backBigInt.toString(2).length(); t++)
+//					temp = temp + "0";
+//			}
+//			temp = temp + backBigInt.toString(2);
 //			System.out.println("concatenated string: " + temp + " size: " + temp.length());
 			
 			/**
@@ -372,9 +383,10 @@ public class DES_Skeleton {
 //			subkeyPC2String = String.valueOf(subkeyPC2);
 //			
 //			BigInteger bigtemp = new BigInteger(subkeyPC2String, 2);
-			BigInteger bigtemp = scramble(temp, 48, sbox.PC2);
+			BigInteger bigtemp = scramble(checkBinaryStr(temp, 56), 48, sbox.PC2);
+			System.out.println("temp check: " + checkBinaryStr(bigtemp.toString(2), 48) + "\tlength: " + checkBinaryStr(bigtemp.toString(2), 48).length());
 			subKeyList.add(bigtemp);
-//			System.out.println("Big temp check: " + bigtemp.toString());
+			System.out.println("Big temp check: " + bigtemp.toString(16) + "\tlength: " + bigtemp.toString(16).length());
 		}
 		
 		return subKeyList;
