@@ -15,11 +15,17 @@ public class RSA_skeleton {
 		StringBuilder eStr = new StringBuilder();
 		StringBuilder m = new StringBuilder();
 		
-		bitSizeStr.append("4096");
+		/*
+		m.append("12345");
+		nStr.append("7257203");
+		eStr.append("7");
+		bitSizeStr.append("24");
 		
 		genRSAkey(bitSizeStr);
 		
-		/*
+		RSAencrypt(m, nStr, eStr);
+		*/
+		
 		pcl(args, bitSizeStr, nStr, dStr, eStr,m);
 		
 		if(!bitSizeStr.toString().equalsIgnoreCase("")){
@@ -35,13 +41,33 @@ public class RSA_skeleton {
 			RSAdecrypt(m, nStr, dStr);
 		}
 		
-		*/
+		
 	}
 
 
-
+	/**
+	 * given n and e and a string message, this encrypts so that
+	 * C = M^e mod(n); where C is the cipherText
+	 * @param m
+	 * @param nStr
+	 * @param eStr
+	 */
 	private static void RSAencrypt(StringBuilder m, StringBuilder nStr, StringBuilder eStr) {
-		// TODO Auto-generated method stub
+		String cipher = "";
+		BigInteger c = null;
+		BigInteger e = null;
+		BigInteger n = null;
+		BigInteger message = null;
+		message = BigInteger.valueOf(Integer.parseInt(m.toString()));
+		e = BigInteger.valueOf(Integer.parseInt(eStr.toString()));
+		n = new BigInteger(nStr.toString().getBytes());//BigInteger.valueOf(Long.parseLong(nStr.toString()));
+		
+		System.out.println("Message is: " + message.toString());
+		
+		c = message.modPow(e, n);
+		cipher += c.toString();
+		System.out.println("cipher text is: " + cipher);
+		
 	}
 
 	private static void RSAdecrypt(StringBuilder cStr, StringBuilder nStr,
@@ -74,15 +100,23 @@ public class RSA_skeleton {
 		/*
 		 *  phi = (p-1)*(q-1)
 		*/
+		//System.out.println("p is: " + p.toString() + "\nq is: " + q.toString());
 		BigInteger product = p.multiply(q);
-		System.out.println("Product bit length is: " + product.bitLength());
+		System.out.println("Product bit length is: " + product.bitLength() + "\nn is: " + product.toString());
 		BigInteger phi = (p.subtract(one)).multiply(q.subtract(one));
+		System.out.println("phi is: " + phi.toString());
+		BigInteger e = null;
 		
-		
+		for (int x = 3; true; x+=2) {
+			e = BigInteger.valueOf(x);
+			if (e.gcd(phi).equals(one)) {
+				break;
+			}
+		}
 		/*
 		 * Create e which is relatively prime to phi
-		 */
-		BigInteger e = null;
+		 
+		
 		int randomE = oddRand(); //max 32 bits with leading zeroes
 		while (true) {
 			e = BigInteger.valueOf(randomE);
@@ -93,21 +127,21 @@ public class RSA_skeleton {
 				randomE = oddRand();
 			}
 		}
-		
+		*/
 		System.out.println("e is: " + e.toString());
 		
-		/***
-		 * TO DO: fix d lol
-		 */
-		BigInteger d = (one.divide(e)).gcd(phi);
+		
+		BigInteger d = (e.modInverse(phi));
 		System.out.println("d is: " + d.toString());
 		
+		System.out.println("Public Key: (" + e.toString(16) + ", " + product.toString(16) + ")");
+		System.out.println("Private Key: (" + d.toString(16) + ", " + product.toString(16) + ")");
 	}
-
+/*
 	/**
 	 * Generates a secure random odd number no more than 32 bits big
 	 * @return
-	 */
+	 
 	private static int oddRand() {
 		SecureRandom rand = new SecureRandom();
 		int num; 
@@ -121,7 +155,7 @@ public class RSA_skeleton {
 		return num;
 		
 	}
-
+*/
 	/**
 	 * This function Processes the Command Line Arguments.
 	 */
