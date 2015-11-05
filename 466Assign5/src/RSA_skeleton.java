@@ -7,7 +7,7 @@ import gnu.getopt.Getopt;
 
 public class RSA_skeleton {
 	/*
-	private static String message = "12345";
+	private static String message = "";
 	private static String myN = "";
 	private static String myE = "";
 	private static String myD = "";
@@ -15,8 +15,11 @@ public class RSA_skeleton {
 	*/
 	public static void main(String[] args){
 		
-
-		
+/*
+		DES_Skeleton des = new DES_Skeleton();
+		message = des.genDESkey();
+		System.out.println("Key from DES is: " + message);
+	*/
 		StringBuilder bitSizeStr = new StringBuilder();
 		StringBuilder nStr = new StringBuilder();
 		StringBuilder dStr = new StringBuilder();
@@ -24,11 +27,10 @@ public class RSA_skeleton {
 		StringBuilder cStr = new StringBuilder();
 		StringBuilder keyStr = new StringBuilder();
 		StringBuilder m = new StringBuilder();
-		
-		/*
+/*
 		m.append(message);
 		
-		bitSizeStr.append("24");
+		bitSizeStr.append("1024");
 		
 		genRSAkey(bitSizeStr);
 		nStr.append(myN);
@@ -40,7 +42,8 @@ public class RSA_skeleton {
 		cStr.append(encrypted);
 		RSAdecrypt(cStr, nStr, dStr);
 		
-		*/
+		
+*/
 		pcl(args, bitSizeStr, nStr, dStr, eStr,m);
 		
 		if(!bitSizeStr.toString().equalsIgnoreCase("")){
@@ -56,7 +59,6 @@ public class RSA_skeleton {
 			RSAdecrypt(m, nStr, dStr);
 		}
 		
-		
 	}
 
 
@@ -70,30 +72,30 @@ public class RSA_skeleton {
 	private static void RSAencrypt(StringBuilder m, StringBuilder nStr, StringBuilder eStr) {
 		String cipher = "";
 		BigInteger c = null;
-		BigInteger e = new BigInteger(eStr.toString());
-		BigInteger n = new BigInteger(nStr.toString());
-		BigInteger message = new BigInteger(m.toString());
+		BigInteger e = new BigInteger(eStr.toString(), 16);
+		BigInteger n = new BigInteger(nStr.toString(), 16);
+		BigInteger message = new BigInteger(m.toString(), 16);
 
 		
-		System.out.println("Message is: " + message.toString());
+		System.out.println("Message is: " + message.toString(16));
 		
 		c = message.modPow(e, n);
-		cipher += c.toString();
+		cipher += c.toString(16);
 		System.out.println("cipher text is: " + cipher);
-		//encrypted = cipher;
+	//	encrypted = cipher;
 		
 	}
 
-	private static void RSAdecrypt(StringBuilder cStr, StringBuilder nStr,
-			StringBuilder dStr){
+	private static void RSAdecrypt(StringBuilder cStr, StringBuilder nStr, StringBuilder dStr){
+		
 		String message = "";
 		BigInteger m = null;
-		BigInteger cipher = new BigInteger(cStr.toString());
-		BigInteger n = new BigInteger(nStr.toString());
-		BigInteger d = new BigInteger(dStr.toString());
+		BigInteger cipher = new BigInteger(cStr.toString(), 16);
+		BigInteger n = new BigInteger(nStr.toString(), 16);
+		BigInteger d = new BigInteger(dStr.toString(), 16);
 		
 		m = cipher.modPow(d, n);
-		message = m.toString();
+		message = m.toString(16);
 		System.out.println("decrypted message is: " + message);
 		// TODO Auto-generated method stub
 	}
@@ -159,11 +161,12 @@ public class RSA_skeleton {
 		
 		System.out.println("Public Key: (" + e.toString(16) + ", " + product.toString(16) + ")");
 		System.out.println("Private Key: (" + d.toString(16) + ", " + product.toString(16) + ")");
-		/*
-		myE = e.toString();
-		myD = d.toString();
-		myN = product.toString();
-		*/
+	/*
+		myE = e.toString(16);
+		myD = d.toString(16);
+		myN = product.toString(16);
+	*/
+		
 	}
 /*
 	/**
