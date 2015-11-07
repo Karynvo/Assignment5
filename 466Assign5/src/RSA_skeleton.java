@@ -69,7 +69,7 @@ public class RSA_skeleton {
 	 * @param nStr
 	 * @param eStr
 	 */
-	private static void RSAencrypt(StringBuilder m, StringBuilder nStr, StringBuilder eStr) {
+	static String RSAencrypt(StringBuilder m, StringBuilder nStr, StringBuilder eStr) {
 		String cipher = "";
 		BigInteger c = null;
 		BigInteger e = new BigInteger(eStr.toString(), 16);
@@ -77,16 +77,17 @@ public class RSA_skeleton {
 		BigInteger message = new BigInteger(m.toString(), 16);
 
 		
-		System.out.println("Message is: " + message.toString(16));
+	//	System.out.println("Message is: " + message.toString(16));
 		
 		c = message.modPow(e, n);
 		cipher += c.toString(16);
-		System.out.println("cipher text is: " + cipher);
+	//	System.out.println("cipher text is: " + cipher);
+		return cipher;
 	//	encrypted = cipher;
 		
 	}
 
-	private static void RSAdecrypt(StringBuilder cStr, StringBuilder nStr, StringBuilder dStr){
+	static String RSAdecrypt(StringBuilder cStr, StringBuilder nStr, StringBuilder dStr){
 		
 		String message = "";
 		BigInteger m = null;
@@ -96,8 +97,9 @@ public class RSA_skeleton {
 		
 		m = cipher.modPow(d, n);
 		message = m.toString(16);
-		System.out.println("decrypted message is: " + message);
+	//	System.out.println("decrypted message is: " + message);
 		// TODO Auto-generated method stub
+		return message;
 	}
 	
 	private static void genRSAkey(StringBuilder bitSizeStr) {
@@ -127,9 +129,13 @@ public class RSA_skeleton {
 		*/
 		//System.out.println("p is: " + p.toString() + "\nq is: " + q.toString());
 		BigInteger product = p.multiply(q);
-		System.out.println("Product bit length is: " + product.bitLength() + "\nn is: " + product.toString());
+	//	System.out.println("Product bit length is: " + product.bitLength() + "\nn is: " + product.toString());
 		BigInteger phi = (p.subtract(one)).multiply(q.subtract(one));
-		System.out.println("phi is: " + phi.toString());
+//		System.out.println("phi is: " + phi.toString());
+		
+		/*
+		 * Create e which is relatively prime to phi
+		*/
 		BigInteger e = null;
 		
 		for (int x = 3; true; x+=2) {
@@ -138,26 +144,12 @@ public class RSA_skeleton {
 				break;
 			}
 		}
-		/*
-		 * Create e which is relatively prime to phi
-		 
 		
-		int randomE = oddRand(); //max 32 bits with leading zeroes
-		while (true) {
-			e = BigInteger.valueOf(randomE);
-			if (e.gcd(phi).equals(one)) {
-				break;
-			}
-			else {
-				randomE = oddRand();
-			}
-		}
-		*/
-		System.out.println("e is: " + e.toString());
+	//	System.out.println("e is: " + e.toString());
 		
 		
 		BigInteger d = (e.modInverse(phi));
-		System.out.println("d is: " + d.toString());
+	//	System.out.println("d is: " + d.toString());
 		
 		System.out.println("Public Key: (" + e.toString(16) + ", " + product.toString(16) + ")");
 		System.out.println("Private Key: (" + d.toString(16) + ", " + product.toString(16) + ")");

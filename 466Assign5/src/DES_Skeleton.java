@@ -30,26 +30,28 @@ public class DES_Skeleton {
 		
 		
 		pcl(args, inputFile, outputFile, keyStr, encrypt);
-		
+		/*
 		if(keyStr.toString() != "" && encrypt.toString().equals("e")){
 			encrypt(keyStr, inputFile, outputFile);
 		} else if(keyStr.toString() != "" && encrypt.toString().equals("d")){
 			decrypt(keyStr, inputFile, outputFile);
 		}
-		
+		*/
 		
 	}
 	
 
-	private static void decrypt(StringBuilder keyStr, StringBuilder inputFile,
-			StringBuilder outputFile) {
+	static String decrypt(StringBuilder keyStr, String message) {
 		ArrayList<BigInteger> subkeys = genSubkeys(keyStr.toString());
 		Collections.reverse(subkeys); //INVERSE SUBKEYS
+		/*
 		try {
+			/*
 			PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
 			List<String> lines = Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset());
 			String IVStr = lines.get(0);
 			lines.remove(0);
+			
 			String encryptedText;
 			String trimmed = "";
 			String readIn="";
@@ -64,7 +66,26 @@ public class DES_Skeleton {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		*/
+		//look for newline break string into substring iv and encrypted text
+		// encrypted text does not have iv or newline
+		String decryptedText;
+		String iv = "";
+		String encrypted = "";
+		String trimmed = "";
+		for (int x = 0; x < message.length(); x++) {
+			if (message.charAt(x) == '\n') {
+				iv = message.substring(0, x);
+				encrypted = message.substring(x+1, message.length());
+				break;
+			}
+		}
+		decryptedText = DES_decrypt(iv, encrypted, subkeys);
+		//return decryptedText;
 		
+	//	System.out.println("decrypted text from decrypt: " + decryptedText);
+		trimmed = decryptedText.substring(0, decryptedText.length() - (8-Integer.parseInt(decryptedText.substring(decryptedText.length()-1))));
+		return trimmed;
 	}
 
 	/**
@@ -131,7 +152,7 @@ public class DES_Skeleton {
 	
 
 //change string to string builder
-	private static void encrypt(StringBuilder keyStr, StringBuilder inputFile, StringBuilder outputFile) {
+	static String encrypt(StringBuilder keyStr, String textToPass) {
 		ArrayList<BigInteger> subkeys = genSubkeys(keyStr.toString());
 	
 		//System.out.println("Subkeys from encrypt");
@@ -139,14 +160,17 @@ public class DES_Skeleton {
 			System.out.println(big.toString(16));
 		}*/
 	//	System.out.println("After subkeys");
-		try {
+		//try {
+			/*
 		//	System.out.println("In try block");
 			PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
 			String textToPass="";
-			String encryptedText="";
+			
 			for (String line : Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset())) {
 				textToPass += line + "\n";
 			}
+			*/
+				String encryptedText="";
 				int linelength = textToPass.length();
 				int extraChars = linelength % 8;
 				
@@ -163,14 +187,16 @@ public class DES_Skeleton {
 				//System.out.println("Lines read in" + textToPass);
 			//	System.out.println("\ngoing to call DES_Encrypt\n");
 				encryptedText = DES_encrypt(textToPass, subkeys);
+				return encryptedText;
 			//	System.out.println(encryptedText);
-				writer.print(encryptedText);
+				//writer.print(encryptedText);
 			
-			writer.close();
+			//writer.close();
+				/*
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+*/
 		
 	}
 	/**
@@ -241,7 +267,7 @@ public class DES_Skeleton {
 			cipherblock = checkBinaryStr(scramble(cipherblock, 64, sbox.FP).toString(16), 16); /* ALERT CHECKED CIPHERBLOCK*/
 			previousCipher = new BigInteger(cipherblock, 16);
 			
-			encrypted = encrypted + cipherblock + "\n";		//begin function f
+			encrypted = encrypted + cipherblock;// + "\n";		//begin function f /**PREVIOUSLY APPENDED "\n"*/
 			//System.out.println("line: " + line + "\tline length: " + line.length());
 		//	System.out.println("cipherblock is: " + cipherblock + "\tlength: " + cipherblock.length());
 		}
@@ -400,7 +426,7 @@ public class DES_Skeleton {
 		if (!checkKey(sb.toString())) {
 			return genDESkey();
 		}
-		System.out.println("Key: " + sb.toString());
+		//System.out.println("Key: " + sb.toString());
 		return sb.toString();
 	}
 
