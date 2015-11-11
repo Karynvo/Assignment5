@@ -1,4 +1,8 @@
-
+/**
+ * WRITTEN BY: Karyn Vo (32) and Sydney Warner (54)
+ * CS466 Assignment5: Part B - Public/Private key RSA Program
+ * due 11/13 @ 11:59
+ */
 import java.math.BigInteger;
 import java.security.SecureRandom;
 

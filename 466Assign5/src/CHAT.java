@@ -1,4 +1,8 @@
-
+/**
+ * WRITTEN BY: Karyn Vo (32) and Sydney Warner (54)
+ * CS466 Assignment5: Part C - Chat program
+ * due 11/13 @ 11:59
+ */
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
